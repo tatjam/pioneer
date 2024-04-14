@@ -676,7 +676,7 @@ namespace SceneGraph {
 			m_debugMesh.reset();
 		}
 	}
-	bool Model::IsPointInsideBoundNamed(const std::string &name, vector3d point)
+	bool Model::IsPointInsideBoundNamed(const std::string &name, vector3f point)
 	{
 		for(const auto& bound : m_bounds)
 		{
@@ -686,20 +686,20 @@ namespace SceneGraph {
 			if(bound.type == BoundDefinition::THICK_LINE)
 			{
 				// Point-line distance
-				const auto& end = bound.data.asThickLine.end;
-				const auto& start = bound.data.asThickLine.start;
+				const auto& start = FindTagByName(bound.tags[0])->GetGlobalTransform().GetTranslate();
+				const auto& end = FindTagByName(bound.tags[1])->GetGlobalTransform().GetTranslate();
 				float segmentDist2 = (end - start).LengthSqr();
-				float t = std::max(0.0, std::min(1.0, (point - start).Dot(end - start) / segmentDist2));
-				vector3d projectedPoint = start + t * (end - start);
+				float t = std::max(0.0f, std::min(1.0f, (point - start).Dot(end - start) / segmentDist2));
+				vector3f projectedPoint = start + t * (end - start);
 
-				if((point-projectedPoint).Length() <= bound.data.asThickLine.radius)
+				if((point-projectedPoint).Length() <= bound.params[0])
 				{
 					return true;
 				}
 			}
 		}
 
-sssssssss	return false;
+	return false;
 	}
 
 } // namespace SceneGraph

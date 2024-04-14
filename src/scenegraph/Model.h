@@ -184,7 +184,7 @@ namespace SceneGraph {
 		void SetDebugFlags(Uint32 flags);
 
 		bool IsPointInsideBoundNamed(const std::string& name,
-			vector3d point);
+			vector3f point);
 
 	private:
 		Model(const Model &);

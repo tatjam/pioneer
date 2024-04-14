@@ -73,32 +73,23 @@ namespace SceneGraph {
 	struct BoundDefinition {
 		enum Type
 		{
-			THICK_LINE
+			THICK_LINE // tags[0] = start tags[1] = end params[0] = radius
 		};
 
-		struct ThickLine
-		{
-			vector3d start, end;
-			double radius;
-		};
-
-		std::string for_bound;
 		Type type;
-		union BoundDefinitionUnion {
-			ThickLine asThickLine;
-		};
-
-		BoundDefinitionUnion data;
+		std::string for_bound;
+		std::string tags[3];
+		double params[2];
 
 		static BoundDefinition create_thick_line(std::string for_b,
-			vector3d start, vector3d end, double rad)
+			std::string start, std::string end, double rad)
 		{
 			BoundDefinition out;
 			out.type = THICK_LINE;
 			out.for_bound = for_b;
-			out.data.asThickLine.start = start;
-			out.data.asThickLine.end = end;
-			out.data.asThickLine.radius = rad;
+			out.tags[0] = start;
+			out.tags[1] = end;
+			out.params[0] = rad;
 			return out;
 		}
 

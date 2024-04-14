@@ -182,17 +182,14 @@ namespace SceneGraph {
 				return true;
 			} else if (match(token, "bound_thick_line"))
 			{
-				std::string bound_name;
-				double sx, sy, sz;
-				double ex, ey, ez;
+				std::string bound_name, start, end;
 				double r;
-				if(!(ss >> bound_name && ss >> sx && ss >> sy && ss >> sz
-						&& ss >> ex && ss >> ey && ss >> ez && ss >> r))
+				if(!(ss >> bound_name && ss >> start && ss >> end && ss >> r))
 				{
 					throw ParseError("Malformed thick line");
 				}
 				m_model->boundsDefs.push_back(BoundDefinition::create_thick_line(bound_name,
-					{sx, sy, sz}, {ex, ey, ez}, r));
+					start, end, r));
 				return true;
 			} else {
 				if (m_isMaterial) {

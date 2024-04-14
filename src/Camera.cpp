@@ -469,7 +469,7 @@ void Camera::CalcInteriorLighting(const Body *b, double &ambient, double &direct
 	{
 		SpaceStation* as_ss = (SpaceStation*)ss;
 		vector3d b_point = b->GetPositionRelTo(as_ss);
-		any_inside |= as_ss->GetModel()->IsPointInsideBoundNamed("interior", b_point);
+		any_inside |= as_ss->GetModel()->IsPointInsideBoundNamed("interior", vector3f(b_point));
 	}
 	if(any_inside)
 	{
