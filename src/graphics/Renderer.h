@@ -48,6 +48,16 @@ namespace Graphics {
 		typedef std::map<TextureCacheKey, RefCountedPtr<Texture> *> TextureCacheMap;
 
 	public:
+
+		// Helps objects determine what features they must render
+		enum RenderPass
+		{
+			GBUFFER, // Direct
+			FORWARD,
+			SHADOW
+		};
+		RenderPass m_currentRenderPass;
+
 		using TextureCache = TextureCacheMap;
 
 		Renderer(SDL_Window *win, int width, int height);
@@ -83,7 +93,7 @@ namespace Graphics {
 		// returns currently bound render target (if any)
 		virtual RenderTarget *GetRenderTarget() = 0;
 		//set 0 to render to screen
-		virtual bool SetRenderTarget(RenderTarget *) = 0;
+		virtual bool SetRenderTarget(RenderTarget *, RenderPass) = 0;
 
 		// Copy a portion of one render target to another, optionally scaling the target
 		virtual void CopyRenderTarget(RenderTarget *src, RenderTarget *dst, ViewportExtents srcRect, ViewportExtents dstRect, bool linearFilter = true) = 0;
@@ -157,7 +167,8 @@ namespace Graphics {
 		// Make a copy of the given material with a possibly new descriptor or render state.
 		virtual Material *CloneMaterial(const Material *mat, const MaterialDescriptor &descriptor, const RenderStateDesc &stateDescriptor) = 0;
 		virtual Texture *CreateTexture(const TextureDescriptor &descriptor) = 0;
-		virtual RenderTarget *CreateRenderTarget(const RenderTargetDesc &) = 0; //returns nullptr if unsupported
+		virtual RenderTarget *CreateRenderTarget(const RenderTargetDesc &,
+			RenderTarget* depth_override) = 0; //returns nullptr if unsupported
 		virtual VertexBuffer *CreateVertexBuffer(const VertexBufferDesc &) = 0;
 		virtual IndexBuffer *CreateIndexBuffer(Uint32 size, BufferUsage, IndexBufferSize = INDEX_BUFFER_32BIT) = 0;
 		virtual InstanceBuffer *CreateInstanceBuffer(Uint32 size, BufferUsage) = 0;
@@ -183,6 +194,7 @@ namespace Graphics {
 
 		virtual bool ReloadShaders() = 0;
 
+
 		// take a ticket representing the current renderer state. when the ticket
 		// is deleted, the renderer state is restored
 		// XXX state must die
@@ -196,12 +208,13 @@ namespace Graphics {
 				m_storedProj = m_renderer->GetProjection();
 				m_storedMV = m_renderer->GetTransform();
 				m_storedRT = m_renderer->GetRenderTarget();
+				m_storedRP = m_renderer->m_currentRenderPass;
 			}
 
 			virtual ~StateTicket()
 			{
 				m_renderer->PopState();
-				m_renderer->SetRenderTarget(m_storedRT);
+				m_renderer->SetRenderTarget(m_storedRT, m_storedRP);
 				m_renderer->SetViewport(m_storedVP);
 				m_renderer->SetTransform(m_storedMV);
 				m_renderer->SetProjection(m_storedProj);
@@ -213,6 +226,7 @@ namespace Graphics {
 		private:
 			Renderer *m_renderer;
 			RenderTarget *m_storedRT;
+			RenderPass m_storedRP;
 			matrix4x4f m_storedProj;
 			matrix4x4f m_storedMV;
 			ViewportExtents m_storedVP;

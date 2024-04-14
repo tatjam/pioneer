@@ -43,7 +43,7 @@ void ModelSpinner::CreateRenderTarget()
 		uint16_t(Pi::GetApp()->GetGraphicsSettings().requestedSamples)
 	};
 
-	m_renderTarget.reset(Pi::renderer->CreateRenderTarget(rtDesc));
+	m_renderTarget.reset(Pi::renderer->CreateRenderTarget(rtDesc, nullptr));
 	if (!m_renderTarget) Error("Error creating render target for model viewer.");
 
 
@@ -53,7 +53,7 @@ void ModelSpinner::CreateRenderTarget()
 		Graphics::TextureFormat::TEXTURE_NONE, true
 	};
 
-	m_resolveTarget.reset(Pi::renderer->CreateRenderTarget(resolveDesc));
+	m_resolveTarget.reset(Pi::renderer->CreateRenderTarget(resolveDesc, nullptr));
 	if (!m_resolveTarget) Error("Error creating MSAA resolve render target for model viewer.");
 
 	m_needsResize = false;
@@ -83,7 +83,7 @@ void ModelSpinner::Render()
 	const auto &desc = m_renderTarget.get()->GetDesc();
 	Graphics::ViewportExtents extents = { 0, 0, desc.width, desc.height };
 
-	r->SetRenderTarget(m_renderTarget.get());
+	r->SetRenderTarget(m_renderTarget.get(), Graphics::Renderer::FORWARD);
 	r->SetViewport(extents);
 
 	float lightIntensity[4] = { 0.75f, 0.f, 0.f, 0.f };

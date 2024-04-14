@@ -41,7 +41,8 @@ namespace Graphics {
 		virtual bool SwapBuffers() override final { return true; }
 
 		virtual RenderTarget *GetRenderTarget() override final { return m_rt; }
-		virtual bool SetRenderTarget(RenderTarget *rt) override final { m_rt = rt; return true; }
+		virtual bool SetRenderTarget(RenderTarget *rt, RenderPass rpass) override final {
+			m_rt = rt; m_currentRenderPass = rpass; return true; }
 		virtual bool SetScissor(ViewportExtents ext) override final { return true; }
 
 		virtual void CopyRenderTarget(RenderTarget *, RenderTarget *, ViewportExtents, ViewportExtents, bool) override final {}
@@ -77,7 +78,8 @@ namespace Graphics {
 		virtual Material *CreateMaterial(const std::string &s, const MaterialDescriptor &d, const RenderStateDesc &rsd) override final { return new Graphics::Dummy::Material(rsd); }
 		virtual Material *CloneMaterial(const Material *m, const MaterialDescriptor &d, const RenderStateDesc &rsd) override final { return new Graphics::Dummy::Material(rsd); }
 		virtual Texture *CreateTexture(const TextureDescriptor &d) override final { return new Graphics::TextureDummy(d); }
-		virtual RenderTarget *CreateRenderTarget(const RenderTargetDesc &d) override final { return new Graphics::Dummy::RenderTarget(d); }
+		virtual RenderTarget *CreateRenderTarget(const RenderTargetDesc &d,
+			RenderTarget* depth_override) override final { return new Graphics::Dummy::RenderTarget(d); }
 		virtual VertexBuffer *CreateVertexBuffer(const VertexBufferDesc &d) override final { return new Graphics::Dummy::VertexBuffer(d); }
 		virtual IndexBuffer *CreateIndexBuffer(Uint32 size, BufferUsage bu, IndexBufferSize el) override final { return new Graphics::Dummy::IndexBuffer(size, bu, el); }
 		virtual InstanceBuffer *CreateInstanceBuffer(Uint32 size, BufferUsage bu) override final { return new Graphics::Dummy::InstanceBuffer(size, bu); }

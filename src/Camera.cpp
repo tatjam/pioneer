@@ -15,6 +15,7 @@
 #include "graphics/TextureBuilder.h"
 #include "graphics/Types.h"
 #include "graphics/RenderState.h"
+#include "graphics/RenderTarget.h"
 
 using namespace Graphics;
 
@@ -118,6 +119,20 @@ Camera::Camera(RefCountedPtr<CameraContext> context, Graphics::Renderer *rendere
 	m_billboardMaterial.reset(m_renderer->CreateMaterial("billboards", desc, rsd));
 	m_billboardMaterial->SetTexture("texture0"_hash,
 		Graphics::TextureBuilder::Billboard("textures/planet_billboard.dds").GetOrCreateTexture(m_renderer, "billboard"));
+
+	// TODO: Resizing...
+	Graphics::RenderTargetDesc rtDesc = {
+		uint16_t(m_renderer->GetWindowWidth()), uint16_t(m_renderer->GetWindowHeight()),
+		{Graphics::TEXTURE_RGBA_8888,   	// Albedo + Emission
+		 Graphics::TEXTURE_RGB_888,			// Position
+		 Graphics::TEXTURE_RGB_888,			// Normal
+		 Graphics::TEXTURE_RGB_888			// AO - Roughness - Metallic
+		},
+		Graphics::TEXTURE_DEPTH, true,
+		uint16_t(1) // TODO: Read settings
+	};
+
+	m_gbuffer = m_renderer->CreateRenderTarget(rtDesc, nullptr);
 }
 
 static void position_system_lights(Frame *camFrame, Frame *frame, std::vector<Camera::LightSource> &lights)
@@ -149,7 +164,10 @@ void Camera::Update()
 	FrameId camFrame = m_context->GetTempFrame();
 
 	// evaluate each body and determine if/where/how to draw it
-	m_sortedBodies.clear();
+	m_sortedBodiesForward.clear();
+	m_sortedBodiesDeferred.clear();
+	m_sortedBodiesShadow.clear();
+
 	for (Body *b : Pi::game->GetSpace()->GetBodies()) {
 		BodyAttrs attrs;
 		attrs.body = b;
@@ -222,11 +240,24 @@ void Camera::Update()
 				attrs.calcAtmosphereLighting = true;
 		}
 
-		m_sortedBodies.push_back(attrs);
+		if(b->NeedsForwardPass() || attrs.billboard)
+		{
+			m_sortedBodiesForward.push_back(attrs);
+		}
+		if(b->NeedsDeferredPass() && !attrs.billboard)
+		{
+			m_sortedBodiesDeferred.push_back(attrs);
+		}
+		if(b->NeedsShadowPass() && !attrs.billboard)
+		{
+			m_sortedBodiesShadow.push_back(attrs);
+		}
 	}
 
 	// depth sort
-	m_sortedBodies.sort();
+	m_sortedBodiesForward.sort();
+	m_sortedBodiesDeferred.sort();
+	m_sortedBodiesShadow.sort();
 }
 
 void Camera::Draw(const Body *excludeBody)
@@ -239,11 +270,25 @@ void Camera::Draw(const Body *excludeBody)
 	Frame *camFrame = Frame::GetFrame(camFrameId);
 	Frame *rootFrame = Frame::GetFrame(rootFrameId);
 
-	m_renderer->ClearScreen();
-
 	matrix4x4d trans2bg;
 	Frame::GetFrameTransform(rootFrameId, camFrameId, trans2bg);
 	trans2bg.ClearToRotOnly();
+
+	{
+		Graphics::Renderer::StateTicket st(m_renderer);
+		// Draw to gbuffer
+		m_renderer->SetRenderTarget(m_gbuffer, Graphics::Renderer::GBUFFER);
+		m_renderer->ClearScreen();
+
+		for (auto i = m_sortedBodiesDeferred.begin(); i != m_sortedBodiesDeferred.end(); ++i)
+		{
+			BodyAttrs *attrs = &(*i);
+			attrs->body->Render(m_renderer, this, attrs->viewCoords, attrs->viewTransform);
+		}
+	}
+
+	// Draw to forward buffer
+	m_renderer->ClearScreen();
 
 	// Pick up to four suitable system light sources (stars)
 	m_lightSources.clear();
@@ -306,7 +351,7 @@ void Camera::Draw(const Body *excludeBody)
 
 	Graphics::VertexArray billboards(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_NORMAL);
 
-	for (std::list<BodyAttrs>::iterator i = m_sortedBodies.begin(); i != m_sortedBodies.end(); ++i) {
+	for (auto i = m_sortedBodiesForward.begin(); i != m_sortedBodiesForward.end(); ++i) {
 		BodyAttrs *attrs = &(*i);
 
 		// explicitly exclude a single body if specified (eg player)

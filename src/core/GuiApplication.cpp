@@ -30,7 +30,7 @@ void GuiApplication::BeginFrame()
 {
 	PROFILE_SCOPED()
 
-	m_renderer->SetRenderTarget(m_renderTarget.get());
+	m_renderer->SetRenderTarget(m_renderTarget.get(), Graphics::Renderer::FORWARD);
 	m_renderer->SetViewport({ 0, 0, m_renderer->GetWindowWidth(), m_renderer->GetWindowHeight() });
 	m_renderer->ClearScreen();
 
@@ -56,7 +56,7 @@ Graphics::RenderTarget *GuiApplication::CreateRenderTarget(const Graphics::Setti
 		uint16_t(settings.requestedSamples)
 	};
 
-	return m_renderer->CreateRenderTarget(rtDesc);
+	return m_renderer->CreateRenderTarget(rtDesc, nullptr);
 }
 
 void GuiApplication::OnWindowResized()
@@ -73,15 +73,15 @@ void GuiApplication::OnWindowResized()
 	if (width != m_renderTarget->GetDesc().width || height != m_renderTarget->GetDesc().height) {
 		// Flush all commands using the prior render target
 		m_renderer->FlushCommandBuffers();
-		m_renderer->SetRenderTarget(nullptr);
+		m_renderer->SetRenderTarget(nullptr, Graphics::Renderer::FORWARD);
 
 		// Copy the existing render target settings (MSAA etc.) and resize
 		rtDesc.width = width;
 		rtDesc.height = height;
-		m_renderTarget.reset(m_renderer->CreateRenderTarget(rtDesc));
+		m_renderTarget.reset(m_renderer->CreateRenderTarget(rtDesc, nullptr));
 
 		// Setup the new render target for rendering
-		m_renderer->SetRenderTarget(m_renderTarget.get());
+		m_renderer->SetRenderTarget(m_renderTarget.get(), Graphics::Renderer::FORWARD);
 		m_renderer->SetViewport({ 0, 0, width, height });
 		m_renderer->ClearScreen();
 	}

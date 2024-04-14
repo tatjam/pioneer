@@ -108,6 +108,10 @@ public:
 	virtual void TimeStepUpdate(const float timeStep) {}
 	virtual void Render(Graphics::Renderer *r, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) = 0;
 
+	virtual bool NeedsDeferredPass() { return false; };
+	virtual bool NeedsForwardPass() { return true; };
+	virtual bool NeedsShadowPass() { return false; };
+
 	virtual void SetFrame(FrameId f) { m_frame = f; }
 	FrameId GetFrame() const { return m_frame; }
 	void SwitchToFrame(FrameId newFrame);

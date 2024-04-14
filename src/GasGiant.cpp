@@ -790,7 +790,7 @@ void GasGiant::CreateRenderTarget(const Uint16 width, const Uint16 height)
 		{Graphics::TEXTURE_NONE}, // don't create a texture
 		Graphics::TEXTURE_NONE, // don't create a depth buffer
 		false);
-	s_renderTarget = Pi::renderer->CreateRenderTarget(rtDesc);
+	s_renderTarget = Pi::renderer->CreateRenderTarget(rtDesc, nullptr);
 }
 
 //static

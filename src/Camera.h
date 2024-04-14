@@ -22,6 +22,7 @@ class Frame;
 namespace Graphics {
 	class Material;
 	class Renderer;
+	class RenderTarget;
 } // namespace Graphics
 
 class CameraContext : public RefCounted {
@@ -124,10 +125,12 @@ public:
 	int GetNumLightSources() const { return static_cast<Uint32>(m_lightSources.size()); }
 
 private:
+
 	RefCountedPtr<CameraContext> m_context;
 	Graphics::Renderer *m_renderer;
 
 	std::unique_ptr<Graphics::Material> m_billboardMaterial;
+	Graphics::RenderTarget* m_gbuffer;
 
 	// temp attrs for sorting and drawing
 	struct BodyAttrs {
@@ -162,7 +165,9 @@ private:
 		};
 	};
 
-	std::list<BodyAttrs> m_sortedBodies;
+	std::list<BodyAttrs> m_sortedBodiesDeferred;
+	std::list<BodyAttrs> m_sortedBodiesForward;
+	std::list<BodyAttrs> m_sortedBodiesShadow;
 	std::vector<LightSource> m_lightSources;
 };
 

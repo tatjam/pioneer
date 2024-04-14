@@ -679,7 +679,7 @@ void SectorMap::CreateRenderTarget()
 		Graphics::TextureFormat::TEXTURE_DEPTH, true
 	};
 
-	m_renderTarget.reset(m_context.renderer->CreateRenderTarget(rtDesc));
+	m_renderTarget.reset(m_context.renderer->CreateRenderTarget(rtDesc, nullptr));
 	if (!m_renderTarget) Error("Error creating render target for model viewer.");
 
 	m_needsResize = false;
@@ -705,7 +705,7 @@ void SectorMap::DrawEmbed()
 		// state ticket resets all draw state at the end of the scope
 		Graphics::Renderer::StateTicket ticket(r);
 
-		r->SetRenderTarget(m_renderTarget.get());
+		r->SetRenderTarget(m_renderTarget.get(), Graphics::Renderer::FORWARD);
 		r->SetViewport({ 0, 0, desc.width, desc.height });
 
 		Draw3D();

@@ -263,7 +263,7 @@ namespace GasGiantJobs {
 		Pi::renderer->SetTransform(matrix4x4f::Identity());
 
 		// render to offscreen rt
-		Pi::renderer->SetRenderTarget(GasGiant::GetRenderTarget());
+		Pi::renderer->SetRenderTarget(GasGiant::GetRenderTarget(), Graphics::Renderer::FORWARD);
 
 		for (Uint32 iFace = 0; iFace < NUM_PATCHES; iFace++) {
 			// render the scene

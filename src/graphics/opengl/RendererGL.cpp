@@ -271,7 +271,7 @@ namespace Graphics {
 		m_drawCommandList.reset(new OGL::CommandList(this));
 
 		m_viewport = ViewportExtents(0, 0, m_width, m_height);
-		SetRenderTarget(nullptr);
+		SetRenderTarget(nullptr, RenderPass::FORWARD);
 
 		m_drawUniformBuffers.reserve(8);
 		GetDrawUniformBuffer(0);
@@ -634,13 +634,14 @@ namespace Graphics {
 		return m_activeRenderTarget;
 	}
 
-	bool RendererOGL::SetRenderTarget(RenderTarget *rt)
+	bool RendererOGL::SetRenderTarget(RenderTarget *rt, RenderPass rpass)
 	{
 		PROFILE_SCOPED()
 		FlushCommandBuffers();
 
 		m_activeRenderTarget = static_cast<OGL::RenderTarget *>(rt);
 		m_drawCommandList->AddRenderPassCmd(m_activeRenderTarget, m_viewport);
+		m_currentRenderPass = rpass;
 		CheckRenderErrors(__FUNCTION__, __LINE__);
 
 		return true;
@@ -1052,7 +1053,8 @@ namespace Graphics {
 		return new OGL::TextureGL(descriptor, m_useCompressedTextures, m_useAnisotropicFiltering);
 	}
 
-	RenderTarget *RendererOGL::CreateRenderTarget(const RenderTargetDesc &desc)
+	RenderTarget *RendererOGL::CreateRenderTarget(const RenderTargetDesc &desc,
+		RenderTarget* depth_override)
 	{
 		PROFILE_SCOPED()
 		OGL::RenderTarget *rt = new OGL::RenderTarget(this, desc);
@@ -1075,7 +1077,11 @@ namespace Graphics {
 				rt->SetColorTexture(id, colorTex);
 				CHECKERRORS();
 			}
-			if (desc.depthFormat != TEXTURE_NONE) {
+			if(depth_override) {
+				OGL::RenderTarget* rt_depth = dynamic_cast<OGL::RenderTarget *>(depth_override);
+				rt->SetDepthTexture(rt_depth->m_depthTexture.Get());
+			}
+			else if (desc.depthFormat != TEXTURE_NONE) {
 				if (desc.allowDepthTexture) {
 					Graphics::TextureDescriptor ddesc(
 						TEXTURE_DEPTH,

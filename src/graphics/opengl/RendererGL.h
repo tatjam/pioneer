@@ -65,7 +65,7 @@ namespace Graphics {
 		virtual bool SwapBuffers() override final;
 
 		virtual RenderTarget *GetRenderTarget() override final;
-		virtual bool SetRenderTarget(RenderTarget *) override final;
+		virtual bool SetRenderTarget(RenderTarget *, RenderPass) override final;
 		virtual bool SetScissor(ViewportExtents) override final;
 
 		virtual void CopyRenderTarget(RenderTarget *, RenderTarget *, ViewportExtents, ViewportExtents, bool) override final;
@@ -102,7 +102,8 @@ namespace Graphics {
 		virtual Material *CreateMaterial(const std::string &, const MaterialDescriptor &, const RenderStateDesc &) override final;
 		virtual Material *CloneMaterial(const Material *, const MaterialDescriptor &, const RenderStateDesc &) override final;
 		virtual Texture *CreateTexture(const TextureDescriptor &descriptor) override final;
-		virtual RenderTarget *CreateRenderTarget(const RenderTargetDesc &) override final;
+		virtual RenderTarget *CreateRenderTarget(const RenderTargetDesc &,
+			RenderTarget* depth_override) override final;
 		virtual VertexBuffer *CreateVertexBuffer(const VertexBufferDesc &) override final;
 		virtual IndexBuffer *CreateIndexBuffer(Uint32 size, BufferUsage, IndexBufferSize) override final;
 		virtual InstanceBuffer *CreateInstanceBuffer(Uint32 size, BufferUsage) override final;

@@ -1455,52 +1455,57 @@ void Ship::Render(Graphics::Renderer *renderer, const Camera *camera, const vect
 {
 	if (IsDead()) return;
 
-	m_propulsion->Render(renderer, camera, viewCoords, viewTransform);
+	if(renderer->m_currentRenderPass == Graphics::Renderer::FORWARD) {
+		m_propulsion->Render(renderer, camera, viewCoords, viewTransform);
 
-	// transpose the interpolated orient to convert velocity into shipspace, then into view space
-	// FIXME: this produces a vector oriented to the top of the ship when velocity is forward.
-	vector3f heatingNormal = matrix3x3f(viewTransform.GetOrient()).Inverse().Transpose() * vector3f(GetVelocity().Normalized());
-	float heatingAmount = Clamp(GetHullTemperature(), 0.0, 1.0);
 
-	for (Uint32 m = 0; m < GetModel()->GetNumMaterials(); m++) {
-		GetModel()->GetMaterialByIndex(m)->SetPushConstant(s_heatingNormalParam, heatingNormal, heatingAmount);
+		// This has to be done per-model with a shield and just before it's rendered
+		const bool shieldsVisible = m_shieldCooldown > 0.01f && m_stats.shield_mass_left > (m_stats.shield_mass / 100.0f);
+		GetShields()->SetEnabled(shieldsVisible);
+		GetShields()->Update(m_shieldCooldown, 0.01f * GetPercentShields());
+
+		//strncpy(params.pText[0], GetLabel().c_str(), sizeof(params.pText));
+		m_navLights->Render(renderer);
+		renderer->GetStats().AddToStatCount(Graphics::Stats::STAT_SHIPS, 1);
+
+		if (m_ecmRecharge > 0.0f) {
+			constexpr uint32_t NUM_ECM_PARTICLES = 100;
+			// ECM effect: a cloud of particles for a sparkly effect
+			Graphics::VertexArray particles(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_NORMAL, NUM_ECM_PARTICLES);
+			for (uint32_t i = 0; i < NUM_ECM_PARTICLES; i++) {
+				const double r1 = Pi::rng.Double() - 0.5;
+				const double r2 = Pi::rng.Double() - 0.5;
+				const double r3 = Pi::rng.Double() - 0.5;
+				vector3f pos(GetPhysRadius() * vector3d(r1, r2, r3).NormalizedSafe());
+				particles.Add(pos, vector3f(0.f, 0.f, 50.f));
+			}
+
+			Color c(128, 128, 255, 255);
+			float totalRechargeTime = GetECMRechargeTime();
+			if (totalRechargeTime >= 0.0f) {
+				c.a = (m_ecmRecharge / totalRechargeTime) * 255;
+			}
+
+			SfxManager::ecmParticle->diffuse = c;
+
+			matrix4x4f t(viewTransform);
+			t.SetTranslate(vector3f(viewCoords));
+
+			renderer->SetTransform(t);
+			renderer->DrawBuffer(&particles, SfxManager::ecmParticle.get());
+		}
 	}
+	else if(renderer->m_currentRenderPass == Graphics::Renderer::GBUFFER) {
+		// transpose the interpolated orient to convert velocity into shipspace, then into view space
+		// FIXME: this produces a vector oriented to the top of the ship when velocity is forward.
+		vector3f heatingNormal = matrix3x3f(viewTransform.GetOrient()).Inverse().Transpose() * vector3f(GetVelocity().Normalized());
+		float heatingAmount = Clamp(GetHullTemperature(), 0.0, 1.0);
 
-	// This has to be done per-model with a shield and just before it's rendered
-	const bool shieldsVisible = m_shieldCooldown > 0.01f && m_stats.shield_mass_left > (m_stats.shield_mass / 100.0f);
-	GetShields()->SetEnabled(shieldsVisible);
-	GetShields()->Update(m_shieldCooldown, 0.01f * GetPercentShields());
-
-	//strncpy(params.pText[0], GetLabel().c_str(), sizeof(params.pText));
-	RenderModel(renderer, camera, viewCoords, viewTransform);
-	m_navLights->Render(renderer);
-	renderer->GetStats().AddToStatCount(Graphics::Stats::STAT_SHIPS, 1);
-
-	if (m_ecmRecharge > 0.0f) {
-		constexpr uint32_t NUM_ECM_PARTICLES = 100;
-		// ECM effect: a cloud of particles for a sparkly effect
-		Graphics::VertexArray particles(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_NORMAL, NUM_ECM_PARTICLES);
-		for (uint32_t i = 0; i < NUM_ECM_PARTICLES; i++) {
-			const double r1 = Pi::rng.Double() - 0.5;
-			const double r2 = Pi::rng.Double() - 0.5;
-			const double r3 = Pi::rng.Double() - 0.5;
-			vector3f pos(GetPhysRadius() * vector3d(r1, r2, r3).NormalizedSafe());
-			particles.Add(pos, vector3f(0.f, 0.f, 50.f));
+		for (Uint32 m = 0; m < GetModel()->GetNumMaterials(); m++) {
+			GetModel()->GetMaterialByIndex(m)->SetPushConstant(s_heatingNormalParam, heatingNormal, heatingAmount);
 		}
 
-		Color c(128, 128, 255, 255);
-		float totalRechargeTime = GetECMRechargeTime();
-		if (totalRechargeTime >= 0.0f) {
-			c.a = (m_ecmRecharge / totalRechargeTime) * 255;
-		}
-
-		SfxManager::ecmParticle->diffuse = c;
-
-		matrix4x4f t(viewTransform);
-		t.SetTranslate(vector3f(viewCoords));
-
-		renderer->SetTransform(t);
-		renderer->DrawBuffer(&particles, SfxManager::ecmParticle.get());
+		RenderModel(renderer, camera, viewCoords, viewTransform);
 	}
 }
 

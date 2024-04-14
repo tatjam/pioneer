@@ -87,6 +87,8 @@ public:
 	virtual void SetLandedOn(Planet *p, float latitude, float longitude);
 
 	virtual void Render(Graphics::Renderer *r, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
+	virtual bool NeedsDeferredPass() { return true; }
+	virtual bool NeedsForwardPass() { return true; }
 
 	inline void ClearThrusterState()
 	{
