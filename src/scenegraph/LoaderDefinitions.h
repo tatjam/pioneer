@@ -7,6 +7,7 @@
  * Data strcutrures used by Loader
  */
 #include "Color.h"
+#include "../vector3.h"
 
 #include <string>
 #include <vector>
@@ -69,12 +70,47 @@ namespace SceneGraph {
 		bool loop;
 	};
 
+	struct BoundDefinition {
+		enum Type
+		{
+			THICK_LINE
+		};
+
+		struct ThickLine
+		{
+			vector3d start, end;
+			double radius;
+		};
+
+		std::string for_bound;
+		Type type;
+		union BoundDefinitionUnion {
+			ThickLine asThickLine;
+		};
+
+		BoundDefinitionUnion data;
+
+		static BoundDefinition create_thick_line(std::string for_b,
+			vector3d start, vector3d end, double rad)
+		{
+			BoundDefinition out;
+			out.type = THICK_LINE;
+			out.for_bound = for_b;
+			out.data.asThickLine.start = start;
+			out.data.asThickLine.end = end;
+			out.data.asThickLine.radius = rad;
+			return out;
+		}
+
+	};
+
 	struct ModelDefinition {
 		std::string name;
 		std::vector<LodDefinition> lodDefs;
 		std::vector<MaterialDefinition> matDefs;
 		std::vector<std::string> collisionDefs;
 		std::vector<AnimDefinition> animDefs;
+		std::vector<BoundDefinition> boundsDefs;
 	};
 
 } // namespace SceneGraph

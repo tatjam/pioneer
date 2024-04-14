@@ -180,6 +180,20 @@ namespace SceneGraph {
 					throw ParseError("Animation start/end frames seem wrong");
 				m_model->animDefs.push_back(AnimDefinition(animName, startFrame, endFrame, loopMode));
 				return true;
+			} else if (match(token, "bound_thick_line"))
+			{
+				std::string bound_name;
+				double sx, sy, sz;
+				double ex, ey, ez;
+				double r;
+				if(!(ss >> bound_name && ss >> sx && ss >> sy && ss >> sz
+						&& ss >> ex && ss >> ey && ss >> ez && ss >> r))
+				{
+					throw ParseError("Malformed thick line");
+				}
+				m_model->boundsDefs.push_back(BoundDefinition::create_thick_line(bound_name,
+					{sx, sy, sz}, {ex, ey, ez}, r));
+				return true;
 			} else {
 				if (m_isMaterial) {
 					//material definition in progress, check known parameters

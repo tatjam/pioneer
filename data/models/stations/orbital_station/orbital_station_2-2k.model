@@ -48,3 +48,7 @@ mesh station_ring_2-2k.dae
 
 collision station_B_coll.dae	
 #collision station_ring_2-5k_coll.dae
+
+bound_thick_line interior 0 0 167 0 0 88 70
+bound_thick_line interior 0 0 88 0 0 -122 90
+bound_thick_line interior 0 0 -122 0 0 -194 70

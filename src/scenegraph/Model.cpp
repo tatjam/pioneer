@@ -62,7 +62,8 @@ namespace SceneGraph {
 		m_activeAnimations(0),
 		m_curPatternIndex(model.m_curPatternIndex),
 		m_curPattern(model.m_curPattern),
-		m_debugFlags(0)
+		m_debugFlags(0),
+		m_bounds(model.m_bounds)
 	{
 		//selective copying of node structure
 		NodeCopyCache cache;
@@ -674,6 +675,31 @@ namespace SceneGraph {
 		} else {
 			m_debugMesh.reset();
 		}
+	}
+	bool Model::IsPointInsideBoundNamed(const std::string &name, vector3d point)
+	{
+		for(const auto& bound : m_bounds)
+		{
+			if(bound.for_bound != name)
+				continue;
+
+			if(bound.type == BoundDefinition::THICK_LINE)
+			{
+				// Point-line distance
+				const auto& end = bound.data.asThickLine.end;
+				const auto& start = bound.data.asThickLine.start;
+				float segmentDist2 = (end - start).LengthSqr();
+				float t = std::max(0.0, std::min(1.0, (point - start).Dot(end - start) / segmentDist2));
+				vector3d projectedPoint = start + t * (end - start);
+
+				if((point-projectedPoint).Length() <= bound.data.asThickLine.radius)
+				{
+					return true;
+				}
+			}
+		}
+
+sssssssss	return false;
 	}
 
 } // namespace SceneGraph

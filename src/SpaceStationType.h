@@ -97,6 +97,14 @@ public:
 		vector3d zaxis;
 	};
 
+	struct interiorSection_t {
+		vector3d start;
+		vector3d end;
+		double radius;
+	};
+
+	std::vector<interiorSection_t> interior;
+
 	DockStage PivotStage(DockStage s) const;
 
 private:

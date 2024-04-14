@@ -115,6 +115,7 @@ public:
 	};
 
 	void CalcLighting(const Body *b, double &ambient, double &direct) const;
+	void CalcInteriorLighting(const Body* b, double &ambient, double &direct) const;
 	void CalcShadows(const int lightNum, const Body *b, std::vector<Shadow> &shadowsOut) const;
 	float ShadowedIntensity(const int lightNum, const Body *b) const;
 	void PrincipalShadows(const Body *b, const int n, std::vector<Shadow> &shadowsOut) const;
@@ -145,6 +146,8 @@ private:
 
 		// if true, calculate atmosphere-attenuated light intensity for the body
 		bool calcAtmosphereLighting;
+		// if true, calculate interior light intensity for the body
+		bool calcInteriorLighting;
 
 		// if true, draw object as billboard of billboardSize at billboardPos
 		bool billboard;
@@ -163,6 +166,8 @@ private:
 	};
 
 	std::list<BodyAttrs> m_sortedBodies;
+	// For interior check
+	std::vector<Body*> m_spaceStations;
 	std::vector<LightSource> m_lightSources;
 };
 

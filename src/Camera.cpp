@@ -15,6 +15,7 @@
 #include "graphics/TextureBuilder.h"
 #include "graphics/Types.h"
 #include "graphics/RenderState.h"
+#include "SpaceStation.h"
 
 using namespace Graphics;
 
@@ -150,11 +151,13 @@ void Camera::Update()
 
 	// evaluate each body and determine if/where/how to draw it
 	m_sortedBodies.clear();
+	m_spaceStations.clear();
 	for (Body *b : Pi::game->GetSpace()->GetBodies()) {
 		BodyAttrs attrs;
 		attrs.body = b;
 		attrs.billboard = false; // false by default
 		attrs.calcAtmosphereLighting = false; // false by default
+		attrs.calcInteriorLighting = false;
 
 		// If the body wishes to be excluded from the draw, skip it.
 		if (b->GetFlags() & Body::FLAG_DRAW_EXCLUDE)
@@ -222,7 +225,16 @@ void Camera::Update()
 				attrs.calcAtmosphereLighting = true;
 		}
 
+		if(b->IsType(ObjectType::SHIP)) {
+			attrs.calcInteriorLighting = true;
+		}
+
 		m_sortedBodies.push_back(attrs);
+
+		if(b->IsType(ObjectType::SPACESTATION))
+		{
+			m_spaceStations.push_back(b);
+		}
 	}
 
 	// depth sort
@@ -322,6 +334,9 @@ void Camera::Draw(const Body *excludeBody)
 		double ambient = 0.05, direct = 1.0;
 		if (attrs->calcAtmosphereLighting)
 			CalcLighting(attrs->body, ambient, direct);
+
+		if (attrs->calcInteriorLighting)
+			CalcInteriorLighting(attrs->body, ambient, direct);
 
 		for (size_t i = 0; i < m_lightSources.size(); i++)
 			lightIntensities[i] = direct * ShadowedIntensity(i, attrs->body);
@@ -445,6 +460,22 @@ void Camera::CalcLighting(const Body *b, double &ambient, double &direct) const
 	ambient = fraction * (Clamp((light), 0.0, 1.0)) * 0.25;
 
 	ambient = std::max(minAmbient, ambient);
+}
+
+void Camera::CalcInteriorLighting(const Body *b, double &ambient, double &direct) const
+{
+	bool any_inside = false;
+	for(const auto& ss : m_spaceStations)
+	{
+		SpaceStation* as_ss = (SpaceStation*)ss;
+		vector3d b_point = b->GetPositionRelTo(as_ss);
+		any_inside |= as_ss->GetModel()->IsPointInsideBoundNamed("interior", b_point);
+	}
+	if(any_inside)
+	{
+		ambient = 0.4f;
+		direct = 0.0f;
+	}
 }
 
 void Camera::CalcShadows(const int lightNum, const Body *b, std::vector<Shadow> &shadowsOut) const
