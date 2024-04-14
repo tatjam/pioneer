@@ -28,10 +28,10 @@ namespace Graphics {
 			};
 
 			~RenderTarget();
-			virtual Texture *GetColorTexture() const override final;
+			virtual Texture *GetColorTexture(Uint32 id) const override final;
 			virtual Texture *GetDepthTexture() const override final;
 			virtual void SetCubeFaceTexture(const Uint32 face, Texture *t) override final;
-			virtual void SetColorTexture(Texture *) override final;
+			virtual void SetColorTexture(Uint32 id, Texture *) override final;
 			virtual void SetDepthTexture(Texture *) override final;
 
 		protected:
@@ -51,7 +51,7 @@ namespace Graphics {
 			GLuint m_fbo;
 			GLuint m_depthRenderBuffer;
 
-			RefCountedPtr<Texture> m_colorTexture;
+			std::vector<RefCountedPtr<Texture>> m_colorTexture;
 			RefCountedPtr<Texture> m_depthTexture;
 		};
 

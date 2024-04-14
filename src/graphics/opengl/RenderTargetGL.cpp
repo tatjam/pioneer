@@ -50,9 +50,9 @@ namespace Graphics {
 				glDeleteRenderbuffers(1, &m_depthRenderBuffer);
 		}
 
-		Texture *RenderTarget::GetColorTexture() const
+		Texture *RenderTarget::GetColorTexture(Uint32 id) const
 		{
-			return m_colorTexture.Get();
+			return m_colorTexture[id].Get();
 		}
 
 		Texture *RenderTarget::GetDepthTexture() const
@@ -67,10 +67,14 @@ namespace Graphics {
 			//texture format should match the intended fbo format (aka. the one attached first)
 			GLuint texId = t ? static_cast<TextureGL *>(t)->GetTextureID() : 0;
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, texId, 0);
-			m_colorTexture.Reset(t);
+			if(m_colorTexture.empty())
+			{
+				m_colorTexture.emplace_back();
+			}
+			m_colorTexture[0].Reset(t);
 		}
 
-		void RenderTarget::SetColorTexture(Texture *t)
+		void RenderTarget::SetColorTexture(Uint32 id, Texture *t)
 		{
 			ScopedActive binding(m_renderer->GetStateCache(), this);
 
@@ -78,7 +82,11 @@ namespace Graphics {
 			GLuint texId = t ? static_cast<TextureGL *>(t)->GetTextureID() : 0;
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
 				GetDesc().numSamples ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D, texId, 0);
-			m_colorTexture.Reset(t);
+			if(m_colorTexture.size() <= id)
+			{
+				m_colorTexture.resize(id + 1);
+			}
+			m_colorTexture[id].Reset(t);
 		}
 
 		void RenderTarget::SetDepthTexture(Texture *t)

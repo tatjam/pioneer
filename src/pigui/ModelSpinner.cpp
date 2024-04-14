@@ -38,7 +38,7 @@ void ModelSpinner::CreateRenderTarget()
 
 	Graphics::RenderTargetDesc rtDesc{
 		uint16_t(m_size.x), uint16_t(m_size.y),
-		Graphics::TextureFormat::TEXTURE_RGBA_8888,
+			{Graphics::TextureFormat::TEXTURE_RGBA_8888},
 		Graphics::TextureFormat::TEXTURE_DEPTH, true,
 		uint16_t(Pi::GetApp()->GetGraphicsSettings().requestedSamples)
 	};
@@ -49,7 +49,7 @@ void ModelSpinner::CreateRenderTarget()
 
 	Graphics::RenderTargetDesc resolveDesc{
 		uint16_t(m_size.x), uint16_t(m_size.y),
-		Graphics::TextureFormat::TEXTURE_RGBA_8888,
+			{Graphics::TextureFormat::TEXTURE_RGBA_8888},
 		Graphics::TextureFormat::TEXTURE_NONE, true
 	};
 

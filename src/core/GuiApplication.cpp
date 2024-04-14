@@ -51,7 +51,7 @@ Graphics::RenderTarget *GuiApplication::CreateRenderTarget(const Graphics::Setti
 {
 	Graphics::RenderTargetDesc rtDesc = {
 		uint16_t(settings.width), uint16_t(settings.height),
-		Graphics::TEXTURE_RGBA_8888,
+		{Graphics::TEXTURE_RGBA_8888},
 		Graphics::TEXTURE_DEPTH, true,
 		uint16_t(settings.requestedSamples)
 	};

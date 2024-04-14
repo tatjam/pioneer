@@ -11,17 +11,20 @@
 
 namespace Graphics {
 
-	// A render target may have a color texture, depth buffer/texture or both.
+	// A render target may have a series of color textures and a depth texture
 	// Setting the formats to NONE will skip the texture creation, and you will
 	// have to set the textures yourself.
 	// Only request allowDepthTexture if you actually need to read the depth as texture
 	// Specifying a depth format with no allowDepthTexture will create a depth buffer
 	// fixed to this rendertarget
 	struct RenderTargetDesc {
-		RenderTargetDesc(Uint16 _width, Uint16 _height, TextureFormat _colorFormat, TextureFormat _depthFormat, bool _allowDepthTexture = false, Uint16 _samples = 0) :
+		RenderTargetDesc(Uint16 _width, Uint16 _height,
+				std::vector<TextureFormat> _colorFormats,
+				TextureFormat _depthFormat,
+				bool _allowDepthTexture = false, Uint16 _samples = 0) :
 			width(_width),
 			height(_height),
-			colorFormat(_colorFormat),
+			colorFormats(_colorFormats),
 			depthFormat(_depthFormat),
 			allowDepthTexture(_allowDepthTexture),
 			numSamples(_samples)
@@ -29,7 +32,7 @@ namespace Graphics {
 
 		Uint16 width;
 		Uint16 height;
-		TextureFormat colorFormat;
+		std::vector<TextureFormat> colorFormats;
 		TextureFormat depthFormat;
 		bool allowDepthTexture;
 		Uint16 numSamples;
@@ -39,7 +42,7 @@ namespace Graphics {
 	public:
 		virtual ~RenderTarget() {}
 
-		virtual Texture *GetColorTexture() const = 0;
+		virtual Texture *GetColorTexture(Uint32 id = 0) const = 0;
 		virtual Texture *GetDepthTexture() const = 0;
 
 		//Replace the texture attachment, or pass zero to detach
@@ -48,7 +51,7 @@ namespace Graphics {
 		//Setting a depth texture is not allowed if the render target is not
 		//created with allowDepthTexture
 		virtual void SetCubeFaceTexture(const Uint32, Texture *) = 0;
-		virtual void SetColorTexture(Texture *) = 0;
+		virtual void SetColorTexture(const Uint32, Texture *) = 0;
 		virtual void SetDepthTexture(Texture *) = 0;
 
 		const RenderTargetDesc &GetDesc() const { return m_desc; }

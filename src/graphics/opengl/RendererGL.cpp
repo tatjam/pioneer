@@ -1059,24 +1059,11 @@ namespace Graphics {
 		CheckRenderErrors(__FUNCTION__, __LINE__);
 		m_renderStateCache->SetRenderTarget(rt);
 
-		if (desc.colorFormat != TEXTURE_NONE) {
-			Graphics::TextureDescriptor cdesc(
-				desc.colorFormat,
-				vector3f(desc.width, desc.height, 0.0f),
-				vector2f(desc.width, desc.height),
-				LINEAR_CLAMP,
-				false,
-				false,
-				false,
-				0, Graphics::TEXTURE_2D);
-			OGL::TextureGL *colorTex = new OGL::TextureGL(cdesc, false, false, desc.numSamples);
-			rt->SetColorTexture(colorTex);
-			CHECKERRORS();
-		}
-		if (desc.depthFormat != TEXTURE_NONE) {
-			if (desc.allowDepthTexture) {
-				Graphics::TextureDescriptor ddesc(
-					TEXTURE_DEPTH,
+		for(Uint32 id = 0; id < desc.colorFormats.size(); id++) {
+			TextureFormat colorFormat = desc.colorFormats[id];
+			if (colorFormat != TEXTURE_NONE) {
+				Graphics::TextureDescriptor cdesc(
+					colorFormat,
 					vector3f(desc.width, desc.height, 0.0f),
 					vector2f(desc.width, desc.height),
 					LINEAR_CLAMP,
@@ -1084,22 +1071,38 @@ namespace Graphics {
 					false,
 					false,
 					0, Graphics::TEXTURE_2D);
-				OGL::TextureGL *depthTex = new OGL::TextureGL(ddesc, false, false, desc.numSamples);
-				rt->SetDepthTexture(depthTex);
+				OGL::TextureGL *colorTex = new OGL::TextureGL(cdesc, false, false, desc.numSamples);
+				rt->SetColorTexture(id, colorTex);
 				CHECKERRORS();
-			} else {
-				rt->CreateDepthRenderbuffer();
 			}
-		}
+			if (desc.depthFormat != TEXTURE_NONE) {
+				if (desc.allowDepthTexture) {
+					Graphics::TextureDescriptor ddesc(
+						TEXTURE_DEPTH,
+						vector3f(desc.width, desc.height, 0.0f),
+						vector2f(desc.width, desc.height),
+						LINEAR_CLAMP,
+						false,
+						false,
+						false,
+						0, Graphics::TEXTURE_2D);
+					OGL::TextureGL *depthTex = new OGL::TextureGL(ddesc, false, false, desc.numSamples);
+					rt->SetDepthTexture(depthTex);
+					CHECKERRORS();
+				} else {
+					rt->CreateDepthRenderbuffer();
+				}
+			}
 
-		CheckRenderErrors(__FUNCTION__, __LINE__);
+			CheckRenderErrors(__FUNCTION__, __LINE__);
 
-		if (desc.colorFormat != TEXTURE_NONE && desc.depthFormat != TEXTURE_NONE && !rt->CheckStatus()) {
-			GLuint status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-			Log::Error("Unable to create complete render target. (Error: {})\n"
-					   "Does your graphics driver support multisample anti-aliasing?\n"
-					   "If this issue persists, try setting AntiAliasingMode=0 in your config file.\n",
-				gl_framebuffer_error_to_string(status));
+			if (colorFormat != TEXTURE_NONE && desc.depthFormat != TEXTURE_NONE && !rt->CheckStatus()) {
+				GLuint status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+				Log::Error("Unable to create complete render target. (Error: {})\n"
+						   "Does your graphics driver support multisample anti-aliasing?\n"
+						   "If this issue persists, try setting AntiAliasingMode=0 in your config file.\n",
+					gl_framebuffer_error_to_string(status));
+			}
 		}
 
 		// Rebind the active render target
