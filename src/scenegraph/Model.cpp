@@ -676,8 +676,10 @@ namespace SceneGraph {
 			m_debugMesh.reset();
 		}
 	}
-	bool Model::IsPointInsideBoundNamed(const std::string &name, vector3f point)
+	float Model::DistanceFromPointToBound(const std::string &name, vector3f point)
 	{
+		float min_dist = INFINITY;
+
 		for(const auto& bound : m_bounds)
 		{
 			if(bound.for_bound != name)
@@ -692,14 +694,15 @@ namespace SceneGraph {
 				float t = std::max(0.0f, std::min(1.0f, (point - start).Dot(end - start) / segmentDist2));
 				vector3f projectedPoint = start + t * (end - start);
 
-				if((point-projectedPoint).Length() <= bound.params[0])
-				{
-					return true;
+				float dist = (point-projectedPoint).Length() - bound.params[0];
+
+				if(min_dist > dist) {
+					min_dist = dist;
 				}
 			}
 		}
 
-	return false;
+		return min_dist;
 	}
 
 } // namespace SceneGraph
