@@ -231,8 +231,7 @@ void Camera::Update()
 
 		m_sortedBodies.push_back(attrs);
 
-		if(b->IsType(ObjectType::SPACESTATION))
-		{
+		if(b->IsType(ObjectType::SPACESTATION)) {
 			m_spaceStations.push_back(b);
 		}
 	}
@@ -466,14 +465,14 @@ void Camera::CalcInteriorLighting(const Body *b, double &ambient, double &direct
 {
 	bool any_inside = false;
 	float min_dist = INFINITY;
-	for(const auto& ss : m_spaceStations)
-	{
+	for(const auto& ss : m_spaceStations) {
 		SpaceStation* as_ss = (SpaceStation*)ss;
 		vector3d b_point = b->GetPositionRelTo(as_ss);
 		min_dist = std::min(as_ss->GetModel()->DistanceFromPointToBound("interior", vector3f(b_point)), min_dist);
 	}
-	if(min_dist < 20.0f)
-	{
+
+	// TODO: Tweak this depending on ship size and so on...
+	if(min_dist < 20.0f) {
 		float fac = std::max(std::min((20.0f - min_dist) / 20.0f, 1.0f), 0.0f);
 		ambient = 0.4f * fac + ambient * (1.0f - fac);
 		direct = direct * (1.0f - fac);

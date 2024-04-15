@@ -680,13 +680,11 @@ namespace SceneGraph {
 	{
 		float min_dist = INFINITY;
 
-		for(const auto& bound : m_bounds)
-		{
+		for(const auto& bound : m_bounds) {
 			if(bound.for_bound != name)
 				continue;
 
-			if(bound.type == BoundDefinition::THICK_LINE)
-			{
+			if(bound.type == BoundDefinition::THICK_LINE) {
 				// Point-line distance
 				const auto& start = FindTagByName(bound.tags[0])->GetGlobalTransform().GetTranslate();
 				const auto& end = FindTagByName(bound.tags[1])->GetGlobalTransform().GetTranslate();
@@ -694,7 +692,7 @@ namespace SceneGraph {
 				float t = std::max(0.0f, std::min(1.0f, (point - start).Dot(end - start) / segmentDist2));
 				vector3f projectedPoint = start + t * (end - start);
 
-				float dist = (point-projectedPoint).Length() - bound.params[0];
+				float dist = (float)(point-projectedPoint).Length() - bound.params[0];
 
 				if(min_dist > dist) {
 					min_dist = dist;

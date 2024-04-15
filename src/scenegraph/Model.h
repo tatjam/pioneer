@@ -184,8 +184,7 @@ namespace SceneGraph {
 		void SetDebugFlags(Uint32 flags);
 
 		// If distance > 0 it means you are outside bound, otherwise you are inside
-		float DistanceFromPointToBound(const std::string& name,
-			vector3f point);
+		float DistanceFromPointToBound(const std::string& name, vector3f point);
 
 	private:
 		Model(const Model &);
