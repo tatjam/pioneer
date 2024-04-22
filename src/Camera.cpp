@@ -308,11 +308,12 @@ void Camera::Draw(const Body *excludeBody)
 		m_renderer->SetLights(rendererLights.size(), &rendererLights[0]);
 	}
 
-	std::vector<float> oldIntensities;
+	// Save lights for later restoring
+	oldLightIntensities.clear();
 	std::vector<float> lightIntensities;
 	for (size_t i = 0; i < m_lightSources.size(); i++) {
-		lightIntensities.push_back(1.0);
-		oldIntensities.push_back(m_renderer->GetLight(i).GetIntensity());
+		oldLightIntensities.push_back(m_renderer->GetLight(i).GetIntensity());
+		lightIntensities.push_back(1.0f);
 	}
 
 	Graphics::VertexArray billboards(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_NORMAL);
@@ -330,37 +331,11 @@ void Camera::Draw(const Body *excludeBody)
 			continue;
 		}
 
-		double ambient = 0.05, direct = 1.0;
-		if (attrs->calcAtmosphereLighting)
-			CalcLighting(attrs->body, ambient, direct);
-
-		Color4ub ambientLightColor = Color::WHITE;
-		Color4ub stationLightColor = Color::WHITE;
-		double stationFactor = 0.0;
-
-		if (attrs->calcInteriorLighting)
-			CalcInteriorLighting(attrs->body, stationLightColor, stationFactor);
-
-		direct = direct * (1.0 - stationFactor);
-		ambient = ambient * (1.0 - stationFactor) + stationFactor;
-
-		for (size_t i = 0; i < m_lightSources.size(); i++)
-			lightIntensities[i] = direct * ShadowedIntensity(i, attrs->body);
-
-		// Setup dynamic lighting parameters
-		Color4ub ambientMix = (ambientLightColor.Shade(stationFactor)
-			+ stationLightColor.Shade(1.0 - stationFactor)).Shade(1.0 - ambient);
-
-
-		m_renderer->SetAmbientColor(ambientMix);
-		m_renderer->SetLightIntensity(m_lightSources.size(), lightIntensities.data());
-
+		PrepareLighting(attrs->body, attrs->calcAtmosphereLighting, attrs->calcInteriorLighting);
 		attrs->body->Render(m_renderer, this, attrs->viewCoords, attrs->viewTransform);
 	}
 
-	// Restore default ambient color and direct light intensities
-	m_renderer->SetAmbientColor(Color(255, 255, 255));
-	m_renderer->SetLightIntensity(m_lightSources.size(), oldIntensities.data());
+	RestoreLighting();
 
 	if (!billboards.IsEmpty()) {
 		Graphics::Renderer::MatrixTicket mt(m_renderer, matrix4x4f::Identity());
@@ -589,4 +564,41 @@ void Camera::CalcInteriorLighting(const Body* b, Color4ub &sLight, double &sFac)
 		if(as_ss->CalcInteriorLighting(b, sLight, sFac))
 			return;
 	}
+}
+
+void Camera::PrepareLighting(const Body *b, bool doAtmosphere, bool doInteriors) const
+{
+	std::vector<float> lightIntensities;
+
+	double ambient = 0.05, direct = 1.0;
+	if (doAtmosphere)
+		CalcLighting(b, ambient, direct);
+
+	Color4ub ambientLightColor = Color::WHITE;
+	Color4ub stationLightColor = Color::WHITE;
+	double stationFactor = 0.0;
+
+	if (doInteriors)
+		CalcInteriorLighting(b, stationLightColor, stationFactor);
+
+	direct = direct * (1.0 - stationFactor);
+	ambient = ambient * (1.0 - stationFactor) + stationFactor;
+
+	for (size_t i = 0; i < m_lightSources.size(); i++)
+		lightIntensities.push_back(direct * ShadowedIntensity(i, b));
+
+	// Setup dynamic lighting parameters
+	Color4ub ambientMix = (ambientLightColor.Shade((float)stationFactor)
+						   + stationLightColor.Shade(1.0f - stationFactor)).Shade(1.0 - ambient);
+	ambientMix.a = 255;
+
+	m_renderer->SetAmbientColor(ambientMix);
+	m_renderer->SetLightIntensity(m_lightSources.size(), lightIntensities.data());
+
+}
+
+void Camera::RestoreLighting() const
+{
+	m_renderer->SetAmbientColor(Color(255, 255, 255));
+	m_renderer->SetLightIntensity(m_lightSources.size(), oldLightIntensities.data());
 }

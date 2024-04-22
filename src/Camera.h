@@ -123,8 +123,18 @@ public:
 	// lights with properties in camera space
 	const std::vector<LightSource> &GetLightSources() const { return m_lightSources; }
 	int GetNumLightSources() const { return static_cast<Uint32>(m_lightSources.size()); }
+	// Used for lighting the cockpit (and other bodies not directly rendered by the camera)
+	const std::vector<Body*> GetSpaceStations() const { return m_spaceStations; }
+
+	// Sets renderer lighting so that the body is renderer appropiately lit
+	void PrepareLighting(const Body* b, bool doAtmosphere, bool doInteriors) const;
+	// Restores default lights, use after rendering an object with custom lighting
+	// to avoid those bleeding into other objects
+	void RestoreLighting() const;
 
 private:
+	std::vector<float> oldLightIntensities;
+
 	RefCountedPtr<CameraContext> m_context;
 	Graphics::Renderer *m_renderer;
 
