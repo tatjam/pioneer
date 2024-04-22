@@ -334,14 +334,25 @@ void Camera::Draw(const Body *excludeBody)
 		if (attrs->calcAtmosphereLighting)
 			CalcLighting(attrs->body, ambient, direct);
 
+		Color4ub ambientLightColor = Color::WHITE;
+		Color4ub stationLightColor = Color::WHITE;
+		double stationFactor = 0.0;
+
 		if (attrs->calcInteriorLighting)
-			CalcInteriorLighting(attrs->body, ambient, direct);
+			CalcInteriorLighting(attrs->body, stationLightColor, stationFactor);
+
+		direct = direct * (1.0 - stationFactor);
+		ambient = ambient * (1.0 - stationFactor) + stationFactor;
 
 		for (size_t i = 0; i < m_lightSources.size(); i++)
 			lightIntensities[i] = direct * ShadowedIntensity(i, attrs->body);
 
 		// Setup dynamic lighting parameters
-		m_renderer->SetAmbientColor(Color(ambient * 255, ambient * 255, ambient * 255));
+		Color4ub ambientMix = (ambientLightColor.Shade(stationFactor)
+			+ stationLightColor.Shade(1.0 - stationFactor)).Shade(1.0 - ambient);
+
+
+		m_renderer->SetAmbientColor(ambientMix);
 		m_renderer->SetLightIntensity(m_lightSources.size(), lightIntensities.data());
 
 		attrs->body->Render(m_renderer, this, attrs->viewCoords, attrs->viewTransform);
@@ -461,24 +472,6 @@ void Camera::CalcLighting(const Body *b, double &ambient, double &direct) const
 	ambient = std::max(minAmbient, ambient);
 }
 
-void Camera::CalcInteriorLighting(const Body *b, double &ambient, double &direct) const
-{
-	bool any_inside = false;
-	float min_dist = INFINITY;
-	for(const auto& ss : m_spaceStations) {
-		SpaceStation* as_ss = (SpaceStation*)ss;
-		vector3d b_point = b->GetPositionRelTo(as_ss);
-		min_dist = std::min(as_ss->GetModel()->DistanceFromPointToBound("interior", vector3f(b_point)), min_dist);
-	}
-
-	// TODO: Tweak this depending on ship size and so on...
-	if(min_dist < 20.0f) {
-		float fac = std::max(std::min((20.0f - min_dist) / 20.0f, 1.0f), 0.0f);
-		ambient = 0.4f * fac + ambient * (1.0f - fac);
-		direct = direct * (1.0f - fac);
-	}
-}
-
 void Camera::CalcShadows(const int lightNum, const Body *b, std::vector<Shadow> &shadowsOut) const
 {
 	// Set up data for eclipses. All bodies are assumed to be spheres.
@@ -585,5 +578,15 @@ void Camera::PrincipalShadows(const Body *b, const int n, std::vector<Shadow> &s
 	for (int i = 0; i < n; i++) {
 		if (it == itREnd) break;
 		shadowsOut.push_back(*(it++));
+	}
+}
+void Camera::CalcInteriorLighting(const Body* b, Color4ub &sLight, double &sFac) const
+{
+	for(const auto& ss : m_spaceStations)
+	{
+		SpaceStation* as_ss = (SpaceStation*)ss;
+		// Only one of these calls will do anything
+		if(as_ss->CalcInteriorLighting(b, sLight, sFac))
+			return;
 	}
 }

@@ -115,7 +115,7 @@ public:
 	};
 
 	void CalcLighting(const Body *b, double &ambient, double &direct) const;
-	void CalcInteriorLighting(const Body* b, double &ambient, double &direct) const;
+	void CalcInteriorLighting(const Body* b, Color4ub &sLight, double &sFac) const;
 	void CalcShadows(const int lightNum, const Body *b, std::vector<Shadow> &shadowsOut) const;
 	float ShadowedIntensity(const int lightNum, const Body *b) const;
 	void PrincipalShadows(const Body *b, const int n, std::vector<Shadow> &shadowsOut) const;
