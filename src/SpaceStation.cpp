@@ -914,7 +914,7 @@ bool SpaceStation::CalcInteriorLighting(const Body *b, Color4ub &sLight, double&
 	const float bRadius = 30.0f;
 	if(dist - bRadius < 0.0f) {
 		sIntense = std::max(std::min((bRadius - dist) / bRadius, 1.0f), 0.0f);
-		sLight = Color(255, 255, 255).Shade(0.5f);
+		sLight = Color::GRAY;
 		return true;
 	}
 

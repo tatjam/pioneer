@@ -599,6 +599,6 @@ void Camera::PrepareLighting(const Body *b, bool doAtmosphere, bool doInteriors)
 
 void Camera::RestoreLighting() const
 {
-	m_renderer->SetAmbientColor(Color(255, 255, 255));
+	m_renderer->SetAmbientColor(Color::WHITE);
 	m_renderer->SetLightIntensity(m_lightSources.size(), oldLightIntensities.data());
 }
